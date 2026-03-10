@@ -1,0 +1,7 @@
+{
+  "node_version": "20",
+  "graphs": {
+    "youtubeVideoAgent": "./src/agents/youtube-video-agent.mts:youtubeVideoAgent",
+    "researchGraph": "./src/graphs/research-graph.mts:researchGraph"
+  }
+}
