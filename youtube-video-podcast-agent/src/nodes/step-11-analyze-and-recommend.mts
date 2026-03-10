@@ -12,10 +12,16 @@ const specFile = join(
 
 // LLM returns these fields; we derive Recommendation and Confidence from the score
 const llmOutputSchema = z.object({
-  relevanceScore: z.number().int().min(0).max(100),
-  summary: z.string(),
-  reasons: z.array(z.string()),
-});
+  relevanceScore: z.number().int().min(0).max(100).optional(),
+  score: z.number().int().min(0).max(100).optional(),
+  summary: z.string().optional(),
+  reasoning: z.string().optional(),
+  reasons: z.array(z.string()).optional(),
+}).transform((data) => ({
+  relevanceScore: data.relevanceScore ?? data.score ?? 0,
+  summary: data.summary ?? data.reasoning ?? "",
+  reasons: data.reasons ?? (data.reasoning ? [data.reasoning] : ["analysis_failed"]),
+}));
 
 function deriveConfidence(score: number, transcriptAvailable: boolean): VideoRecommendation["Confidence"] {
   if (!transcriptAvailable || score < 40) return "low";
@@ -49,7 +55,7 @@ async function analyzeVideo(
   let reasons: string[] = ["analysis_failed"];
 
   try {
-    const result = await ollamaModel.withStructuredOutput(llmOutputSchema).invoke([
+    const result = await ollamaModel.withStructuredOutput(llmOutputSchema, { method: "jsonMode" }).invoke([
       { role: "user", content: prompt },
     ]) as z.infer<typeof llmOutputSchema>;
     score = result.relevanceScore;

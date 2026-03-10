@@ -94,6 +94,7 @@ const builder = new StateGraph(ResearchState);
 
 builder.addNode("01-capture-env-state", async (): Promise<Update> => {
   const { file, result } = await captureEnvState();
+  console.log(`\n[step-01] ✓ Env captured — lookback: ${result.LookbackDays}d, maxResults: ${result.MaxResults}, lang: ${result.Language}`);
   return {
     files: [{ name: "01-capture-env-state.md", content: file }],
     step01Result: result,
@@ -103,6 +104,7 @@ builder.addNode("01-capture-env-state", async (): Promise<Update> => {
 builder.addNode("02-resolve-data-source", async (state: State): Promise<Update> => {
   if (!state.step01Result) return makeReadNode("02-resolve-data-source.md")();
   const { file, result } = await resolveDataSource(state.step01Result);
+  console.log(`[step-02] ✓ Data source resolved — source: ${result.Source}`);
   return {
     files: [{ name: "02-resolve-data-source.md", content: file }],
     step02Result: result,
@@ -116,6 +118,7 @@ builder.addNode("03-build-search-query", async (state: State): Promise<Update> =
     state.step01Result,
     state.step02Result,
   );
+  console.log(`[step-03] ✓ Query built — "${result.FullQuery}" | after: ${result.PublishedAfter} | topic: ${result.TopicSlug}/${result.QuerySlug}`);
   return {
     files: [{ name: "03-build-search-query.md", content: file }],
     step03Result: result,
@@ -133,6 +136,7 @@ builder.addNode("04-fetch-videos", async (state: State): Promise<Update> => {
   } catch (err) {
     errors.push(`step-04: ${(err as Error).message}`);
   }
+  console.log(`[step-04] ✓ Fetched ${result.length} videos${errors.length ? ` (${errors.length} errors)` : ""}`);
   const file = await readFileTool.invoke({ file_path: join(researchDir, "04-fetch-videos.md") });
   return {
     files: [{ name: "04-fetch-videos.md", content: file }],
@@ -147,6 +151,7 @@ builder.addNode("05-filter-by-date", async (state: State): Promise<Update> => {
     state.step04Result,
     state.step03Result.PublishedAfter,
   );
+  console.log(`[step-05] ✓ Date filter — kept: ${result.length}, excluded: ${excluded.length}`);
   return {
     files: [{ name: "05-filter-by-date.md", content: file }],
     step05Result: result,
@@ -160,6 +165,7 @@ builder.addNode("06-detect-language", async (state: State): Promise<Update> => {
     state.step05Result,
     state.step01Result.Language,
   );
+  console.log(`[step-06] ✓ Language filter — kept: ${result.length}, excluded: ${excluded.length}`);
   return {
     files: [{ name: "06-detect-language.md", content: file }],
     step06Result: result,
@@ -175,6 +181,7 @@ builder.addNode("07-map-to-video-interface", async (state: State): Promise<Updat
     state.step06Result,
     state.step01Result.IncludeShorts,
   );
+  console.log(`[step-07] ✓ Mapped ${result.length} videos`);
   return {
     files: [{ name: "07-map-to-video-interface.md", content: file }],
     step07Result: result,
@@ -184,6 +191,7 @@ builder.addNode("07-map-to-video-interface", async (state: State): Promise<Updat
 builder.addNode("08-save-results", async (state: State): Promise<Update> => {
   if (!state.step07Result || !state.step03Result) return makeReadNode("08-save-results.md")();
   const { file, result } = await saveResults(state.step07Result, state.step03Result);
+  console.log(`[step-08] ✓ Saved ${result} new videos to disk`);
   return {
     files: [{ name: "08-save-results.md", content: file }],
     step08Result: result,
@@ -197,16 +205,29 @@ builder.addNode("10-fetch-transcripts", async (state: State): Promise<Update> =>
     state.step03Result,
     state.step01Result.Language,
   );
+  console.log(`[step-10] ✓ Transcripts — toAnalyze: ${result.ToAnalyze.length}, cached/skipped: ${result.CachedCount}`);
   return { step10Result: result };
 });
 
 builder.addNode("11-analyze-and-recommend", async (state: State): Promise<Update> => {
-  if (!state.step10Result?.ToAnalyze.length || !state.step03Result) return {};
+  if (!state.step10Result?.ToAnalyze.length || !state.step03Result) {
+    console.log(`[step-11] ⚠ Skipped — no new videos to analyze`);
+    return {};
+  }
+  const total = state.step10Result.ToAnalyze.length;
+  console.log(`[step-11] Analyzing ${total} videos...`);
   const { result } = await analyzeAndRecommend(
     state.step10Result.ToAnalyze,
     state.step03Result.TopicSlug,
     state.step03Result.QuerySlug,
   );
+  const watchCount = result.filter((r) => r.Recommendation === "watch").length;
+  console.log(`[step-11] ✓ Done — ${watchCount} watch / ${result.length - watchCount} skip`);
+  for (const r of result) {
+    const icon = r.Recommendation === "watch" ? "▶" : "✕";
+    console.log(`  ${icon} [${r.RelevanceScore}] ${r.Title}`);
+    if (r.Summary) console.log(`      ${r.Summary.slice(0, 120)}`);
+  }
   return { step11Result: result };
 });
 
@@ -217,6 +238,7 @@ builder.addNode("12-save-recommendations", async (state: State): Promise<Update>
     state.step03Result,
     state.step10Result?.CachedCount ?? 0,
   );
+  console.log(`[step-12] ✓ Recommendations saved — ${result.WatchCount} watch, ${result.SkipCount} skip`);
   return { step12Result: result };
 });
 
@@ -244,6 +266,7 @@ builder.addNode("09-write-run-manifest", async (state: State): Promise<Update> =
     stats,
   );
 
+  console.log(`[step-09] ✓ Manifest written`);
   return {
     files: [{ name: "09-write-run-manifest.md", content: file }],
     step09Result: result,

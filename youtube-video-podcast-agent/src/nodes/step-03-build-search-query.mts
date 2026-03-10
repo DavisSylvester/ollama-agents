@@ -24,7 +24,7 @@ export async function buildSearchQuery(
 ): Promise<{ file: string; result: SearchQuery }> {
   const [file, parsed] = await Promise.all([
     readFileTool.invoke({ file_path: specFile }),
-    ollamaModel.withStructuredOutput(topicQuerySchema).invoke([
+    ollamaModel.withStructuredOutput(topicQuerySchema, { method: "jsonMode" }).invoke([
       {
         role: "system",
         content:

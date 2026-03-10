@@ -12,13 +12,17 @@ const specFile = join(
 );
 const outputRoot = join(import.meta.dirname, "../../../docs/youtube/topic");
 
-// Load existing recommendation file to identify already-analyzed videos
+// Load existing recommendation file — only skip videos with valid (non-failed) analysis
 async function loadCachedUrls(topicSlug: string, querySlug: string): Promise<Set<string>> {
   const path = join(outputRoot, topicSlug, `${querySlug}.recommendations.json`);
   try {
     const raw = await Bun.file(path).text();
     const data = JSON.parse(raw) as RecommendationFile;
-    return new Set(data.Recommendations.map((r) => r.Url));
+    return new Set(
+      data.Recommendations
+        .filter((r) => !r.Reasons.includes("analysis_failed"))
+        .map((r) => r.Url),
+    );
   } catch {
     return new Set();
   }
