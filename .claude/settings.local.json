@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bunx tsc:*)",
+      "WebFetch(domain:langchain-ai.github.io)"
+    ]
+  }
+}

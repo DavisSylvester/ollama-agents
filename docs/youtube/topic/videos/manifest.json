@@ -1,0 +1,50 @@
+{
+  "runs": [
+    {
+      "RunAt": "2026-03-10T04:59:06.206Z",
+      "Prompt": "I want to see videos on claude code and ralph loop for the last 3 days",
+      "TopicName": "videos",
+      "QueryName": "claude-code-and-ralph-loop",
+      "FullQuery": "videos claude code and ralph loop",
+      "DataSource": "youtube-api",
+      "PublishedAfter": "2026-03-03",
+      "MaxResults": 50,
+      "Language": "en",
+      "IncludeShorts": true,
+      "Fetched": 14,
+      "AfterDateFilter": 14,
+      "AfterLanguageFilter": 9,
+      "AfterShortsFilter": 9,
+      "NewVideosSaved": 9,
+      "Excluded": [
+        {
+          "Url": "https://www.youtube.com/watch?v=mxtB9z7Ztt8",
+          "Title": "Sous-agents Claude Code : le guide complet",
+          "Reason": "language_mismatch"
+        },
+        {
+          "Url": "https://www.youtube.com/watch?v=UAfq5xHg988",
+          "Title": "🤖 Claude Code 2026: Vergiss VS Code — das ist dein neues Dev-Setup",
+          "Reason": "language_mismatch"
+        },
+        {
+          "Url": "https://www.youtube.com/watch?v=iNBm7CCSnjc",
+          "Title": "🤖 Claude AI Skills 2026: Warum deine Prompts wertlos sind",
+          "Reason": "language_mismatch"
+        },
+        {
+          "Url": "https://www.youtube.com/watch?v=O845KuE3j4U",
+          "Title": "Vibecoding, Kunst und Agenten: Fabian Stelzer (glif) zur Zukunft der Kreativarbeit | INSIDE AI #31",
+          "Reason": "language_mismatch"
+        },
+        {
+          "Url": "https://www.youtube.com/watch?v=-cfICJE-9bQ",
+          "Title": "🚀 KI Agenten richtig skalieren: Das Temporal Orchestration Framework",
+          "Reason": "language_mismatch"
+        }
+      ],
+      "Errors": [],
+      "Recommendation": null
+    }
+  ]
+}
