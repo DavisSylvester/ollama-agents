@@ -5,3 +5,8 @@ export * from "./resolved-source-schema.mts";
 export * from "./search-query-schema.mts";
 export * from "./mapped-video-schema.mts";
 export * from "./manifest-entry-schema.mts";
+export * from "./video-with-transcript-schema.mts";
+export * from "./transcript-fetch-result-schema.mts";
+export * from "./video-recommendation-schema.mts";
+export * from "./recommendation-file-schema.mts";
+export * from "./topic-input-schema.mts";

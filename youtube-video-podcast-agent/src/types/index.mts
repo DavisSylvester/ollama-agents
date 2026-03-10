@@ -4,3 +4,7 @@ export * from "./resolved-source.mts";
 export * from "./search-query.mts";
 export * from "./mapped-video.mts";
 export * from "./manifest-entry.mts";
+export * from "./video-with-transcript.mts";
+export * from "./video-recommendation.mts";
+export * from "./recommendation-file.mts";
+export * from "./topic-input.mts";

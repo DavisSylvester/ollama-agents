@@ -6,6 +6,7 @@ import type { ResolvedSource } from "../types/index.mts";
 import type { EnvState } from "../types/index.mts";
 import type { ExcludedEntry } from "../types/index.mts";
 import type { ManifestEntry } from "../types/index.mts";
+import type { RecommendationStats } from "../types/index.mts";
 
 const specFile = join(import.meta.dirname, "../workflows/youtube-search/research/09-write-run-manifest.md");
 const outputRoot = join(import.meta.dirname, "../../../docs/youtube/topic");
@@ -23,6 +24,7 @@ export interface RunStats {
   newVideosSaved: number;
   excluded: ExcludedEntry[];
   errors: string[];
+  recommendation: RecommendationStats | null;
 }
 
 export async function writeRunManifest(
@@ -64,7 +66,7 @@ export async function writeRunManifest(
     NewVideosSaved: stats.newVideosSaved,
     Excluded: stats.excluded,
     Errors: stats.errors,
-    Recommendation: null,
+    Recommendation: stats.recommendation,
   };
 
   manifest.runs.push(entry);

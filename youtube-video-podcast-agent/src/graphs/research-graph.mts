@@ -11,6 +11,9 @@ import {
   mapToVideoInterface,
   saveResults,
   writeRunManifest,
+  fetchTranscripts,
+  analyzeAndRecommend,
+  saveRecommendations,
 } from "../nodes/index.mts";
 import type { RunStats } from "../nodes/index.mts";
 import type { EnvState } from "../types/env-state.mts";
@@ -20,6 +23,9 @@ import type { RawVideo } from "../types/raw-video.mts";
 import type { MappedVideo } from "../types/mapped-video.mts";
 import type { ManifestEntry } from "../types/manifest-entry.mts";
 import type { ExcludedEntry } from "../types/manifest-entry.mts";
+import type { RecommendationStats } from "../types/manifest-entry.mts";
+import type { TranscriptFetchResult } from "../types/video-with-transcript.mts";
+import type { VideoRecommendation } from "../types/video-recommendation.mts";
 
 const researchDir = join(import.meta.dirname, "../workflows/youtube-search/research");
 
@@ -42,7 +48,7 @@ export interface ResearchFileEntry {
   content: string;
 }
 
-// Identity reducer — last write wins (suited for single-step result slots)
+// Identity reducer — last write wins
 const lastWrite = <T,>(current: T, update: T): T => update ?? current;
 
 const ResearchState = Annotation.Root({
@@ -51,7 +57,6 @@ const ResearchState = Annotation.Root({
     reducer: (current, update) => [...current, ...update],
     default: () => [],
   }),
-  // Accumulated excluded entries and errors across all steps
   excluded: Annotation<ExcludedEntry[]>({
     reducer: (current, update) => [...current, ...update],
     default: () => [],
@@ -68,13 +73,15 @@ const ResearchState = Annotation.Root({
   step06Result: Annotation<RawVideo[] | null>({ reducer: lastWrite, default: () => null }),
   step07Result: Annotation<MappedVideo[] | null>({ reducer: lastWrite, default: () => null }),
   step08Result: Annotation<number | null>({ reducer: lastWrite, default: () => null }),
+  step10Result: Annotation<TranscriptFetchResult | null>({ reducer: lastWrite, default: () => null }),
+  step11Result: Annotation<VideoRecommendation[] | null>({ reducer: lastWrite, default: () => null }),
+  step12Result: Annotation<RecommendationStats | null>({ reducer: lastWrite, default: () => null }),
   step09Result: Annotation<ManifestEntry | null>({ reducer: lastWrite, default: () => null }),
 });
 
 type State = typeof ResearchState.State;
 type Update = typeof ResearchState.Update;
 
-// Fallback: reads only the spec file (used if a step has no real impl yet)
 function makeReadNode(fileName: ResearchFile) {
   return async (): Promise<Update> => {
     const filePath = join(researchDir, fileName);
@@ -183,6 +190,36 @@ builder.addNode("08-save-results", async (state: State): Promise<Update> => {
   };
 });
 
+builder.addNode("10-fetch-transcripts", async (state: State): Promise<Update> => {
+  if (!state.step07Result || !state.step03Result || !state.step01Result) return {};
+  const { result } = await fetchTranscripts(
+    state.step07Result,
+    state.step03Result,
+    state.step01Result.Language,
+  );
+  return { step10Result: result };
+});
+
+builder.addNode("11-analyze-and-recommend", async (state: State): Promise<Update> => {
+  if (!state.step10Result?.ToAnalyze.length || !state.step03Result) return {};
+  const { result } = await analyzeAndRecommend(
+    state.step10Result.ToAnalyze,
+    state.step03Result.TopicSlug,
+    state.step03Result.QuerySlug,
+  );
+  return { step11Result: result };
+});
+
+builder.addNode("12-save-recommendations", async (state: State): Promise<Update> => {
+  if (!state.step11Result || !state.step03Result) return {};
+  const { result } = await saveRecommendations(
+    state.step11Result,
+    state.step03Result,
+    state.step10Result?.CachedCount ?? 0,
+  );
+  return { step12Result: result };
+});
+
 builder.addNode("09-write-run-manifest", async (state: State): Promise<Update> => {
   if (!state.step03Result || !state.step02Result || !state.step01Result) {
     return makeReadNode("09-write-run-manifest.md")();
@@ -197,6 +234,7 @@ builder.addNode("09-write-run-manifest", async (state: State): Promise<Update> =
     newVideosSaved: state.step08Result ?? 0,
     excluded: state.excluded,
     errors: state.errors,
+    recommendation: state.step12Result ?? null,
   };
 
   const { file, result } = await writeRunManifest(
@@ -212,15 +250,21 @@ builder.addNode("09-write-run-manifest", async (state: State): Promise<Update> =
   };
 });
 
-const nodeNames = researchFiles.map((f) => f.replace(".md", ""));
-
-// Chain nodes in order: START -> 01 -> 02 -> ... -> 09 -> END
+// Chain: 01→02→03→04→05→06→07→08→10→11→12→09→END
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const b = builder as any;
-b.addEdge(START, nodeNames[0]);
-for (let i = 0; i < nodeNames.length - 1; i++) {
-  b.addEdge(nodeNames[i], nodeNames[i + 1]);
-}
-b.addEdge(nodeNames[nodeNames.length - 1], END);
+b.addEdge(START, "01-capture-env-state");
+b.addEdge("01-capture-env-state", "02-resolve-data-source");
+b.addEdge("02-resolve-data-source", "03-build-search-query");
+b.addEdge("03-build-search-query", "04-fetch-videos");
+b.addEdge("04-fetch-videos", "05-filter-by-date");
+b.addEdge("05-filter-by-date", "06-detect-language");
+b.addEdge("06-detect-language", "07-map-to-video-interface");
+b.addEdge("07-map-to-video-interface", "08-save-results");
+b.addEdge("08-save-results", "10-fetch-transcripts");
+b.addEdge("10-fetch-transcripts", "11-analyze-and-recommend");
+b.addEdge("11-analyze-and-recommend", "12-save-recommendations");
+b.addEdge("12-save-recommendations", "09-write-run-manifest");
+b.addEdge("09-write-run-manifest", END);
 
 export const researchGraph = builder.compile();

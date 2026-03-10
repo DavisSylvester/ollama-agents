@@ -28,9 +28,12 @@ export async function buildSearchQuery(
       {
         role: "system",
         content:
-          "Extract the primary topic and secondary query term from the user prompt. " +
-          "Return them as JSON with topicName and queryName fields. " +
-          "If there is only one topic, use it as topicName and set queryName to 'general'.",
+          "Extract the primary topic and secondary query term from the user's YouTube search request. " +
+          "topicName is the main subject matter (e.g. a product, tool, technology, or person). " +
+          "queryName is a secondary term that refines the search (e.g. a technique, sub-topic, or person). " +
+          "IGNORE filler words such as: videos, show me, find, search, I want to see, recent, latest, for the last N days. " +
+          "Example: 'I want to see videos on Claude Code and Ralph Loop for the last 3 days' → topicName='Claude Code', queryName='Ralph Loop'. " +
+          "If there is only one meaningful term, use it as topicName and set queryName to 'general'.",
       },
       { role: "user", content: prompt },
     ]),
