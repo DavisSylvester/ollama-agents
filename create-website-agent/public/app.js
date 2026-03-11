@@ -95,6 +95,10 @@ function handleComplete({ slug, previewPath }) {
   setStatus('Complete!', 'green');
   showCompletePanel();
   showPreviewThumb(previewPath);
+  // Show revise button immediately — server will update count via revision_available
+  const btn = document.getElementById('revise-btn');
+  const rem = document.getElementById('revise-remaining');
+  if (btn && rem) { rem.textContent = '(5 left)'; btn.classList.remove('hidden'); }
 }
 
 function handleError({ message }) {

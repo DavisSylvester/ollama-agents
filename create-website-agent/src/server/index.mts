@@ -75,8 +75,9 @@ wss.on('connection', (ws: WebSocket) => {
             baseSlug: data['baseSlug'],
             count: 0,
           };
-          agentIO.revisionAvailable(0, MAX_REVISIONS);
         }
+        // Always send revision_available so the button is shown
+        agentIO.revisionAvailable(revisionState?.count ?? 0, MAX_REVISIONS);
       } catch (err: unknown) {
         agentIO.error(err instanceof Error ? err.message : String(err));
       } finally {
