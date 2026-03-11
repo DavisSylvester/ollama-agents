@@ -43,7 +43,10 @@ const model = createModel(0.7).bindTools(tools);
 
 async function agentNode(state: typeof StateAnnotation.State): Promise<typeof StateAnnotation.State> {
   agentIO.thinking();
+  const startMs = Date.now();
   const response = await model.invoke(state.messages);
+  const elapsed = Date.now() - startMs;
+  if (elapsed < 400) await new Promise<void>((r) => setTimeout(r, 400 - elapsed));
   agentIO.thinkingEnd();
   await checkContext(response, state.messages, (msg) => agentIO.log(msg));
   return { messages: [response] };

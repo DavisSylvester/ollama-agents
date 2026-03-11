@@ -32,11 +32,15 @@ export const collectBusinessInfoTool = tool(
 
     let brandColors: string[] | undefined;
 
+    agentIO.thinking();
+
     if (logoFile) {
       agentIO.log('Logo received — brand colors will be chosen by the AI based on your industry and tone.');
       // Note: Vision-based color extraction can be wired in here if the Ollama server
       // has a vision-capable model available. For now we proceed without it.
     }
+
+    agentIO.thinkingEnd();
 
     if (!brandColors) {
       const raw = await askOptional(
