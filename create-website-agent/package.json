@@ -1,0 +1,28 @@
+{
+  "name": "create-website-agent",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run-agent.mts",
+    "dev": "bun --watch run-agent.mts",
+    "electron": "electron ."
+  },
+  "dependencies": {
+    "@google/genai": "^1.44.0",
+    "@langchain/core": "^1.1.31",
+    "@langchain/langgraph": "^1.2.2",
+    "@langchain/ollama": "^1.2.6",
+    "@langchain/tavily": "^1.2.0",
+    "cheerio": "^1.2.0",
+    "electron": "^33.3.1",
+    "express": "^4.21.2",
+    "langchain": "^1.2.30",
+    "ws": "^8.18.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/express": "^4.17.21",
+    "@types/ws": "^8.5.13"
+  }
+}

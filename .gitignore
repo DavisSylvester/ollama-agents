@@ -1,0 +1,45 @@
+# dependencies
+node_modules
+
+# output / build
+out
+dist
+*.tgz
+
+# generated websites (large output — exclude from repo)
+create-website-agent/generated-websites/
+
+# code coverage
+coverage
+*.lcov
+
+# logs
+logs
+*.log
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# dotenv — NEVER commit secrets
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
+# IDE
+.idea
+.vscode
+
+# OS
+.DS_Store
+Thumbs.db
+
+# LangGraph API
+.langgraph_api
+
+# Bun lockfile (optional — remove if you want to commit it)
+# bun.lockb

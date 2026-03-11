@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Website Builder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand:   { DEFAULT: '#6366f1', dark: '#4f46e5', light: '#a5b4fc' },
+            surface: { DEFAULT: '#0f172a', card: '#1e293b', border: '#334155' },
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease',
+            'pulse-dot': 'pulseDot 1.4s infinite both',
+          },
+          keyframes: {
+            fadeIn:   { from: { opacity: '0', transform: 'translateY(6px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
+            pulseDot: { '0%,80%,100%': { transform: 'scale(0)' }, '40%': { transform: 'scale(1)' } },
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { background: #0f172a; color: #e2e8f0; font-family: 'Inter', system-ui, sans-serif; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #6366f1; display: inline-block; margin: 0 2px; }
+    .dot:nth-child(1) { animation: pulseDot 1.4s 0.0s infinite; }
+    .dot:nth-child(2) { animation: pulseDot 1.4s 0.2s infinite; }
+    .dot:nth-child(3) { animation: pulseDot 1.4s 0.4s infinite; }
+    @keyframes pulseDot { 0%,80%,100%{transform:scale(0);opacity:.3} 40%{transform:scale(1);opacity:1} }
+    .stage-icon { transition: all 0.3s; }
+    .prose { max-width: none; white-space: pre-wrap; }
+    #chat-box { scroll-behavior: smooth; }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+  <!-- Header -->
+  <header class="flex items-center justify-between px-6 py-3 border-b border-surface-border bg-surface-card flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-brand flex items-center justify-center text-white font-bold text-sm">AI</div>
+      <span class="font-semibold text-white">Website Builder</span>
+      <span class="text-xs text-slate-500 ml-1">powered by Ollama + LangGraph</span>
+    </div>
+    <div id="status-badge" class="text-xs px-2 py-1 rounded-full bg-surface border border-surface-border text-slate-400">
+      Ready
+    </div>
+  </header>
+
+  <!-- Main layout -->
+  <div class="flex flex-1 overflow-hidden">
+
+    <!-- Chat area -->
+    <div class="flex flex-col flex-1 overflow-hidden">
+      <div id="chat-box" class="flex-1 overflow-y-auto p-6 space-y-4">
+
+        <div id="welcome" class="flex gap-3 animate-fade-in">
+          <div class="w-8 h-8 rounded-full bg-brand flex-shrink-0 flex items-center justify-center text-white text-xs font-bold mt-1">AI</div>
+          <div class="bg-surface-card border border-surface-border rounded-2xl rounded-tl-none px-4 py-3 max-w-lg">
+            <p class="text-slate-200">Welcome! I'll interview you about your business and build a complete landing page — copy, design, images, and code.</p>
+            <p class="text-slate-400 text-sm mt-2">Click <strong class="text-brand">Start Building</strong> when you're ready.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Input area -->
+      <div class="border-t border-surface-border bg-surface-card px-4 py-3 flex-shrink-0">
+
+        <!-- Start button -->
+        <div id="start-panel" class="flex justify-center">
+          <button id="start-btn" onclick="startBuild()"
+            class="px-6 py-2.5 bg-brand hover:bg-brand-dark text-white font-medium rounded-xl transition-colors">
+            Start Building
+          </button>
+        </div>
+
+        <!-- Answer input -->
+        <div id="input-panel" class="hidden gap-3">
+          <div id="choices-row" class="hidden flex-wrap gap-2 mb-3"></div>
+          <div class="flex gap-3">
+            <input id="answer-input" type="text" placeholder="Type your answer..."
+              class="flex-1 bg-surface border border-surface-border rounded-xl px-4 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+              onkeydown="handleKey(event)" />
+            <button onclick="sendAnswer()"
+              class="px-4 py-2.5 bg-brand hover:bg-brand-dark text-white rounded-xl transition-colors font-medium">
+              Send
+            </button>
+          </div>
+        </div>
+
+        <!-- Logo upload -->
+        <div id="upload-panel" class="hidden flex-col gap-3">
+          <div id="logo-preview" class="hidden items-center gap-3 mb-1">
+            <img id="logo-preview-img" class="h-12 w-auto rounded border border-surface-border object-contain bg-white p-1" src="" alt="Logo preview" />
+            <span class="text-xs text-slate-400">Logo ready to upload</span>
+          </div>
+          <div class="flex gap-2 items-center">
+            <label class="flex-1 cursor-pointer flex items-center gap-2 px-4 py-2.5 bg-surface border border-dashed border-surface-border rounded-xl text-slate-400 hover:border-brand hover:text-brand transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span class="text-sm">Choose logo file</span>
+              <input id="logo-file-input" type="file" class="hidden" accept="image/*" onchange="onLogoSelected(event)" />
+            </label>
+            <button onclick="uploadLogo()" class="px-4 py-2.5 bg-brand hover:bg-brand-dark text-white rounded-xl transition-colors font-medium text-sm">Upload</button>
+            <button onclick="skipUpload()" class="px-4 py-2.5 border border-surface-border text-slate-400 hover:text-white rounded-xl transition-colors text-sm">Skip</button>
+          </div>
+        </div>
+
+        <!-- Complete -->
+        <div id="complete-panel" class="hidden items-center justify-center gap-4 flex-wrap">
+          <span class="text-green-400 font-medium">Site built!</span>
+          <button id="preview-btn" onclick="openPreview()" class="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-colors font-medium">Open Preview</button>
+          <button id="revise-btn" onclick="requestRevision()" class="hidden px-5 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl transition-colors font-medium text-sm">
+            Revise <span id="revise-remaining"></span>
+          </button>
+          <button onclick="resetApp()" class="px-5 py-2 border border-surface-border text-slate-400 hover:text-white rounded-xl transition-colors">Build Another</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pipeline sidebar -->
+    <div class="w-64 border-l border-surface-border bg-surface-card flex-shrink-0 p-4 flex flex-col gap-2 overflow-y-auto">
+      <p class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Pipeline</p>
+
+      <div class="stage-item flex items-center gap-3 px-3 py-2 rounded-lg" data-stage="1">
+        <div class="stage-icon w-6 h-6 rounded-full border-2 border-surface-border flex items-center justify-center text-xs text-slate-500">1</div>
+        <span class="text-sm text-slate-400">Interview</span>
+      </div>
+      <div class="stage-item flex items-center gap-3 px-3 py-2 rounded-lg" data-stage="2">
+        <div class="stage-icon w-6 h-6 rounded-full border-2 border-surface-border flex items-center justify-center text-xs text-slate-500">2</div>
+        <span class="text-sm text-slate-400">Research</span>
+      </div>
+      <div class="stage-item flex items-center gap-3 px-3 py-2 rounded-lg" data-stage="3">
+        <div class="stage-icon w-6 h-6 rounded-full border-2 border-surface-border flex items-center justify-center text-xs text-slate-500">3</div>
+        <span class="text-sm text-slate-400">Copywriting</span>
+      </div>
+      <div class="stage-item flex items-center gap-3 px-3 py-2 rounded-lg" data-stage="4">
+        <div class="stage-icon w-6 h-6 rounded-full border-2 border-surface-border flex items-center justify-center text-xs text-slate-500">4</div>
+        <span class="text-sm text-slate-400">Design</span>
+      </div>
+      <div class="stage-item flex items-center gap-3 px-3 py-2 rounded-lg" data-stage="5">
+        <div class="stage-icon w-6 h-6 rounded-full border-2 border-surface-border flex items-center justify-center text-xs text-slate-500">5</div>
+        <span class="text-sm text-slate-400">Images</span>
+      </div>
+      <div class="stage-item flex items-center gap-3 px-3 py-2 rounded-lg" data-stage="6">
+        <div class="stage-icon w-6 h-6 rounded-full border-2 border-surface-border flex items-center justify-center text-xs text-slate-500">6</div>
+        <span class="text-sm text-slate-400">Code</span>
+      </div>
+      <div class="stage-item flex items-center gap-3 px-3 py-2 rounded-lg" data-stage="7">
+        <div class="stage-icon w-6 h-6 rounded-full border-2 border-surface-border flex items-center justify-center text-xs text-slate-500">7</div>
+        <span class="text-sm text-slate-400">Save</span>
+      </div>
+
+      <!-- Preview thumbnail -->
+      <div id="preview-thumb" class="hidden mt-4">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Preview</p>
+        <div class="rounded-lg overflow-hidden border border-surface-border bg-white" style="height:180px">
+          <iframe id="preview-iframe" class="w-full h-full scale-50 origin-top-left" style="width:200%;height:200%" frameborder="0"></iframe>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
